@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discord-lucas-mcp"
+version = "0.1.0"
+description = "削除禁止ポリシーを備えたDiscord MCPと、DM・メンションからCodexを起動する受信処理"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["mcp==1.30.0", "httpx==0.28.1"]
+
+[project.optional-dependencies]
+gateway = ["discord.py==2.7.1"]
+test = ["build>=1.2"]
+
+[project.scripts]
+discord-lucas-mcp = "discord_lucas_mcp.server:main"
+discord-lucas-listener = "discord_lucas_mcp.listener:main"
+
+[project.urls]
+Repository = "https://github.com/menma22/discord-lucas-mcp"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+include-package-data = false

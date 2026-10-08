@@ -1,0 +1,5 @@
+include README.md pyproject.toml
+recursive-include examples *.json
+recursive-include tests *.py
+recursive-include src *.py
+global-exclude *.pyc

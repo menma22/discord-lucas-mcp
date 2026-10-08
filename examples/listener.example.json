@@ -1,0 +1,12 @@
+{
+  "target_guild_id": "123456789012345678",
+  "bot_id": "123456789012345679",
+  "runtime_dir": "C:/path/to/discord-runtime",
+  "attachment_root": "C:/path/to/discord-runtime/attachments",
+  "codex_path": "C:/path/to/codex.exe",
+  "python_path": "C:/path/to/.venv/Scripts/python.exe",
+  "model": "YOUR_CODEX_MODEL",
+  "timeout_seconds": 180,
+  "history_turns": 10,
+  "dm_allowed_user_ids": ["123456789012345680"]
+}
