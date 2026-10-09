@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discord-lucas-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "削除禁止ポリシーを備えたDiscord MCPと、DM・メンションからCodexを起動する受信処理"
 readme = "README.md"
 requires-python = ">=3.11"

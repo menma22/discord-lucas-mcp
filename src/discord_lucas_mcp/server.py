@@ -2,11 +2,14 @@ import asyncio
 import json
 import logging
 import os
+import ssl
+import threading
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import quote, unquote, urlsplit
 
 import httpx
+import certifi
 from mcp.server.fastmcp import FastMCP
 
 from .policy import assigned_roles, check_mutation, is_message_edit
@@ -14,6 +17,8 @@ from .scope import enforce_scope
 
 TOKEN_FILE = Path(os.environ.get("DISCORD_TOKEN_FILE", str(Path.home() / ".claude/channels/discord/.env")))
 API_BASE = "https://discord.com/api/v10"
+_tls_context: ssl.SSLContext | None = None
+_tls_lock = threading.Lock()
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 mcp = FastMCP(
@@ -37,6 +42,21 @@ mcp = FastMCP(
         "このMCPはHTTP操作を担当し、DM・メンションの受信は別のGatewayリスナーが担当する。"
     ),
 )
+
+
+def tls_context() -> ssl.SSLContext:
+    global _tls_context
+    with _tls_lock:
+        if _tls_context is None:
+            certificate_file = os.environ.get("SSL_CERT_FILE")
+            certificate_dir = os.environ.get("SSL_CERT_DIR")
+            if certificate_file:
+                _tls_context = ssl.create_default_context(cafile=certificate_file)
+            elif certificate_dir:
+                _tls_context = ssl.create_default_context(capath=certificate_dir)
+            else:
+                _tls_context = ssl.create_default_context(cafile=certifi.where())
+        return _tls_context
 
 
 def token() -> str:
@@ -131,7 +151,8 @@ async def request(
                 raise ValueError("この接続の添付上限は1ファイル25MiB。")
             field = file_fields[index] if file_fields is not None else f"files[{index}]"
             upload.append((field, (local.name, local.read_bytes(), "application/octet-stream")))
-    async with httpx.AsyncClient(timeout=45, follow_redirects=False) as client:
+    context = await asyncio.to_thread(tls_context)
+    async with httpx.AsyncClient(timeout=45, follow_redirects=False, verify=context) as client:
         for attempt in range(3):
             kwargs: dict[str, Any] = {"params": query}
             if upload:
@@ -168,7 +189,8 @@ async def request(
 
 async def scope_metadata(path: str) -> dict[str, Any]:
     credential = token()
-    async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
+    context = await asyncio.to_thread(tls_context)
+    async with httpx.AsyncClient(timeout=20, follow_redirects=False, verify=context) as client:
         response = await client.get(API_BASE + path, headers={"Authorization": f"Bot {credential}"})
         if response.status_code != 200:
             raise ValueError(f"操作範囲の事前確認に失敗した（Discord HTTP {response.status_code}）。")
